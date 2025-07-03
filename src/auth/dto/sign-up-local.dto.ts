@@ -1,9 +1,13 @@
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
-export class singInWithEmail {
-     @IsString()
+export class signUpLocalDto {
+        @IsString()
         @MinLength(3)
         name: string;
+
+        @IsString()
+        @MinLength(3)
+        lastName: string;
     
         @IsString()
         @IsEmail()
@@ -13,8 +17,5 @@ export class singInWithEmail {
         @MinLength(6)
         password: string;
     
-        @IsString()
-        @MinLength(3)
-        @IsOptional()
-        lastName?: string;
+        
 }
