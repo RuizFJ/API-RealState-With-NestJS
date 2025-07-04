@@ -1,6 +1,6 @@
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
-export class signUpLocalDto {
+export class SignUpLocalDto {
         @IsString()
         @MinLength(3)
         name: string;

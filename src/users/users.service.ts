@@ -22,10 +22,15 @@ export class UsersService {
         throw new ConflictException(`Email ${createUserDto.email} already exists`);
       }
       const user = await this.userRepository.create(createUserDto);
-      const cretedUser = await this.userRepository.save({
+      if(createUserDto.password){
+        
+        const cretedUser = await this.userRepository.save({
         ...user,
         password: bcrypt.hashSync (createUserDto.password, 10), // Ensure password is set correctly
       });
+      }
+      const cretedUser = await this.userRepository.save(user);
+      
 
       return {
         name: cretedUser.name,
@@ -34,7 +39,7 @@ export class UsersService {
         role: cretedUser.role,
       };
     } catch (error) {
-      throw new BadRequestException(`Error creating user: ${error.message}`, error);
+      throw new BadRequestException(`Error creating user1: ${error.message}`, error);
       
     }
 

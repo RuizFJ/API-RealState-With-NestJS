@@ -1,4 +1,5 @@
 import { AgentRequest } from "src/agent-request/entities/agent-request.entity";
+import { AuthenticationStatus } from "src/common/enums/provider-authentication.enum";
 import { UserRole } from "src/common/enums/user-role.enum";
 import { Property } from "src/properties/entities/property.entity";
 import { agent } from "supertest";
@@ -28,8 +29,8 @@ export class User {
     @Column({ nullable: true }) // para usuarios Google
     googleId: string;
 
-    @Column({ default: 'local' })
-    provider: 'local' | 'google'; //para distinguir origen
+    @Column({type:'enum', enum:AuthenticationStatus, default: AuthenticationStatus.LOCAL})
+    provider: AuthenticationStatus; //para distinguir origen
 
     @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
     created_at: Date;

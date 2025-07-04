@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { signUpLocalDto } from './dto/sign-up-local.dto';
+import { SignUpLocalDto } from './dto/sign-up-local.dto';
+import { GoogleAuthGuard } from './guards/googleAuth.guard';
 
 
 
@@ -9,19 +10,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('sign-up-local')
-  create(@Body() signUpDto: signUpLocalDto) {
+  create(@Body() signUpDto: SignUpLocalDto) {
     return this.authService.registerLocal(signUpDto);
   }
 
- 
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/login')
+  async verifyToken() {
+    return {ms: 'ok'}
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  @UseGuards(GoogleAuthGuard)
+  @Get('google/callback')
+
+  async register(@Req() req) {
+    return this.authService.handleGoogleLogin(req.user);
   }
-}
+  }
+
