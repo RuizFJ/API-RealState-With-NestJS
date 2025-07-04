@@ -1,55 +1,69 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as bcrypt from 'bcrypt'
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-
   constructor(
-      @InjectRepository(User)
-      private readonly userRepository: Repository<User>,
-    ) {}
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     try {
-      // Check if the email already exists
-      const existingUser = await this.userRepository.findOneBy({ email: createUserDto.email });
-      if (existingUser) {
-        throw new ConflictException(`Email ${createUserDto.email} already exists`);
-      }
-      const user = await this.userRepository.create(createUserDto);
-      if(createUserDto.password){
-        
-        const cretedUser = await this.userRepository.save({
-        ...user,
-        password: bcrypt.hashSync (createUserDto.password, 10), // Ensure password is set correctly
+      const existingUser = await this.userRepository.findOneBy({
+        email: createUserDto.email,
       });
+
+      if (existingUser) {
+        throw new ConflictException(
+          `Email ${createUserDto.email} already exists`,
+        );
       }
-      const cretedUser = await this.userRepository.save(user);
-      
+
+      const user = this.userRepository.create({
+        ...createUserDto,
+        password: createUserDto.password
+          ? bcrypt.hashSync(createUserDto.password, 10) // Hash the password if provided
+          : undefined, // si viene por Google no pone nada
+      });
+
+      const createdUser = await this.userRepository.save(user);
 
       return {
-        name: cretedUser.name,
-        email: cretedUser.email,
-        id: cretedUser.id,
-        role: cretedUser.role,
+        name: createdUser.name,
+        email: createdUser.email,
+        id: createdUser.id,
+        role: createdUser.role,
       };
     } catch (error) {
-      throw new BadRequestException(`Error creating user1: ${error.message}`, error);
-      
+      if (error.code === '23505') {
+        throw new ConflictException('Email already exists');
+      }
+      throw new BadRequestException(
+        `Error creating user: ${error.message}`,
+        error,
+      );
     }
-
   }
 
   async findAll() {
     try {
       return await this.userRepository.find();
     } catch (error) {
-      throw new BadRequestException(`Error fetching users: ${error.message}`, error);
+      throw new BadRequestException(
+        `Error fetching users: ${error.message}`,
+        error,
+      );
     }
   }
 
@@ -61,20 +75,24 @@ export class UsersService {
       }
       return user;
     } catch (error) {
-      throw new BadRequestException(`Error fetching user with ID ${id}: ${error.message}`, error);
+      throw new BadRequestException(
+        `Error fetching user with ID ${id}: ${error.message}`,
+        error,
+      );
     }
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
     try {
-      
       const user = await this.findOne(id);
       Object.assign(user, updateUserDto);
       return await this.userRepository.save(user);
     } catch (error) {
-      throw new BadRequestException(`Error updating user: ${error.message}`, error);
-      
-    };
+      throw new BadRequestException(
+        `Error updating user: ${error.message}`,
+        error,
+      );
+    }
   }
 
   async remove(id: string) {
@@ -83,7 +101,10 @@ export class UsersService {
       await this.userRepository.remove(user);
       return { message: `User with ID ${id} removed successfully` };
     } catch (error) {
-      throw new BadRequestException(`Error removing user with ID ${id}: ${error.message}`, error);
+      throw new BadRequestException(
+        `Error removing user with ID ${id}: ${error.message}`,
+        error,
+      );
     }
   }
 
@@ -91,7 +112,10 @@ export class UsersService {
     try {
       return await this.userRepository.findOneBy({ email });
     } catch (error) {
-      throw new BadRequestException(`Error finding user by email ${email}: ${error.message}`, error);
+      throw new BadRequestException(
+        `Error finding user by email ${email}: ${error.message}`,
+        error,
+      );
     }
   }
 }

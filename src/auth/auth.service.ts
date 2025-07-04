@@ -10,6 +10,7 @@ import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
 import { AuthenticationStatus } from 'src/common/enums/provider-authentication.enum';
+import { access } from 'fs';
 
 @Injectable()
 export class AuthService {
@@ -77,7 +78,8 @@ export class AuthService {
         `Email ${userFromGoogle.email} is already registered with local authentication. Please use local login.`,
       );
     }
-    return this.generateJwt(user);
+    const accessToken = this.generateJwt(user);
+    return {accessToken};
   }
 
   private generateJwt(user){
