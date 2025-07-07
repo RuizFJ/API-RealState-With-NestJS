@@ -3,7 +3,7 @@ import { AuthenticationStatus } from "src/common/enums/provider-authentication.e
 import { UserRole } from "src/common/enums/user-role.enum";
 import { Property } from "src/properties/entities/property.entity";
 import { agent } from "supertest";
-import { Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity()
 export class User {
@@ -51,4 +51,8 @@ export class User {
     agentRequest: AgentRequest;
 
 
+    @BeforeInsert()
+    updateEmailToLowerCase() {
+        this.email = this.email.toLowerCase().trim();
+    }
 }

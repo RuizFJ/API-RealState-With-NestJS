@@ -111,6 +111,23 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     try {
       return await this.userRepository.findOneBy({ email });
+    
+    } catch (error) {
+      throw new BadRequestException(
+        `Error finding user by email ${email}: ${error.message}`,
+        error,
+      );
+    }
+  }
+
+  async findByEmailWithPass(email: string) {
+    try {
+      const user = this.userRepository.findOne({
+        where: { email },
+        select: { id: true, email: true, password: true, role: true, provider:true },
+      });
+      
+      return user;
     } catch (error) {
       throw new BadRequestException(
         `Error finding user by email ${email}: ${error.message}`,

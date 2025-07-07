@@ -8,9 +8,10 @@ import { SignUpLocalDto } from './dto/sign-up-local.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { OAuth2Client } from 'google-auth-library';
 import { AuthenticationStatus } from 'src/common/enums/provider-authentication.enum';
-import { access } from 'fs';
+import { LoginDto } from './dto/login.dto';
+import { IsStrongPassword } from 'class-validator';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -79,10 +80,28 @@ export class AuthService {
       );
     }
     const accessToken = this.generateJwt(user);
-    return {accessToken};
+    return { accessToken };
   }
 
-  private generateJwt(user){
+  async login(loginDto: LoginDto) {
+    const user = await this.usersService.findByEmailWithPass(loginDto.email);
+    const { password } = loginDto;
+    
+    if(!user){
+      throw new UnauthorizedException('Invalid credentials');
+    }
+    if(user.provider !== AuthenticationStatus.LOCAL){
+      throw new BadRequestException('This User cannot login')
+    }
+
+    if (!bcrypt.compareSync(password, user.password)) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    return { AccesToken: this.generateJwt(user) };
+  }
+
+  private generateJwt(user) {
     const payload = {
       sub: user.id,
       email: user.email,
