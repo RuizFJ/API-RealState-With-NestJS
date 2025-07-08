@@ -3,9 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   UseGuards,
   Req,
 } from '@nestjs/common';
@@ -37,6 +34,11 @@ export class AuthController {
 
   @Post('login-local')
   loginUser(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+    return this.authService.handleLocalLogin(loginDto);
+  }
+
+  @Post('refresh-token')
+  refresh(@Body('refreshToken') token: string) {
+    return this.authService.rotateRefreshToken(token);
   }
 }

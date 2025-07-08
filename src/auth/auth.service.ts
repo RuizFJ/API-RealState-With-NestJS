@@ -12,6 +12,7 @@ import { AuthenticationStatus } from 'src/common/enums/provider-authentication.e
 import { LoginDto } from './dto/login.dto';
 import { IsStrongPassword } from 'class-validator';
 import * as bcrypt from 'bcrypt';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -43,6 +44,8 @@ export class AuthService {
         throw new BadRequestException('Error creating user');
       }
       const accessToken = this.generateJwt(userdata);
+      const refreshToken = this.generateRefreshTok(userdata);
+      await this.usersService.updateRefreshToken(userdata.id, refreshToken);
 
       return {
         user: {
@@ -52,6 +55,7 @@ export class AuthService {
           role: userdata.role,
         },
         accessToken,
+        refreshToken,
       };
     } catch (error) {
       throw new BadRequestException(
@@ -63,6 +67,7 @@ export class AuthService {
 
   async handleGoogleLogin(userFromGoogle: any) {
     const user = await this.usersService.findByEmail(userFromGoogle.email);
+    let refreshToken: string = '';
 
     if (!user) {
       const newUser = await this.usersService.create({
@@ -72,7 +77,9 @@ export class AuthService {
         googleId: userFromGoogle.googleId,
         provider: AuthenticationStatus.GOOGLE,
       });
-      return this.generateJwt(newUser);
+      refreshToken = this.generateRefreshTok(newUser);
+      await this.usersService.updateRefreshToken(newUser.id, refreshToken);
+      return { accessToken: this.generateJwt(newUser), refreshToken };
     }
     if (user.provider === AuthenticationStatus.LOCAL) {
       throw new UnauthorizedException(
@@ -80,25 +87,33 @@ export class AuthService {
       );
     }
     const accessToken = this.generateJwt(user);
-    return { accessToken };
+    return {
+      accessToken: accessToken,
+      RefreshToken: this.generateRefreshTok(user),
+    };
   }
 
-  async login(loginDto: LoginDto) {
+  async handleLocalLogin(loginDto: LoginDto) {
     const user = await this.usersService.findByEmailWithPass(loginDto.email);
     const { password } = loginDto;
-    
-    if(!user){
+
+    if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    if(user.provider !== AuthenticationStatus.LOCAL){
-      throw new BadRequestException('This User cannot login')
+    if (user.provider !== AuthenticationStatus.LOCAL) {
+      throw new BadRequestException('This User cannot login');
     }
 
     if (!bcrypt.compareSync(password, user.password)) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    return { AccesToken: this.generateJwt(user) };
+    const refreshToken = this.generateRefreshTok(user);
+    await this.usersService.updateRefreshToken(user.id, refreshToken);
+    return {
+      accesToken: this.generateJwt(user),
+      refreshToken: refreshToken
+    };
   }
 
   private generateJwt(user) {
@@ -106,11 +121,74 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       role: user.role,
+      name: user.name,
     };
-    const accessToken = this.jwtService.sign(payload);
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
     if (!accessToken) {
       throw new BadRequestException('Error generating access token');
     }
     return accessToken;
   }
+
+  private generateRefreshTok(user) {
+    const payload = {
+      sub: user.id,
+      email: user.email,
+    };
+    const refreshToken = this.jwtService.sign(payload, {
+      secret: process.env.JWT_REFRESH_SECRET,
+      expiresIn: '7d',
+    });
+    if (!refreshToken) {
+      throw new BadRequestException('Error generating access token');
+    }
+    return refreshToken;
+  }
+
+  async rotateRefreshToken(refreshT: string) {
+
+    try{
+
+    const payload = this.jwtService.verify(refreshT, {
+      secret: process.env.JWT_REFRESH_SECRET,
+    });
+
+    const user = await this.usersService.findById(payload.sub);
+
+      if (!user || !user.refreshToken) {
+        throw new UnauthorizedException('Refresh token not found');
+      }
+
+    const isMatch = await bcrypt.compare(refreshT, user.refreshToken);
+      if (!isMatch) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
+
+    const newPayload = { sub: user.id, email: user.email, role: user.role };
+
+      const newAccessToken = this.jwtService.sign(newPayload, {
+        expiresIn: '15m',
+      });
+
+      const newRefreshToken = this.jwtService.sign(newPayload, {
+        secret: process.env.JWT_REFRESH_SECRET,
+        expiresIn: '7d',
+      });
+
+       await this.usersService.updateRefreshToken(user.id, newRefreshToken);
+
+       return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken,
+      };
+
+    } catch (error) {
+      if (error.name === 'TokenExpiredError') {
+        throw new UnauthorizedException('Refresh token expired');
+      }
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+ 
 }

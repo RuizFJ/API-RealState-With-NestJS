@@ -111,7 +111,6 @@ export class UsersService {
   async findByEmail(email: string): Promise<User | null> {
     try {
       return await this.userRepository.findOneBy({ email });
-    
     } catch (error) {
       throw new BadRequestException(
         `Error finding user by email ${email}: ${error.message}`,
@@ -124,9 +123,15 @@ export class UsersService {
     try {
       const user = this.userRepository.findOne({
         where: { email },
-        select: { id: true, email: true, password: true, role: true, provider:true },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          role: true,
+          provider: true,
+        },
       });
-      
+
       return user;
     } catch (error) {
       throw new BadRequestException(
@@ -134,5 +139,33 @@ export class UsersService {
         error,
       );
     }
+  }
+
+  async findById(id: string) {
+    try {
+      const user = this.userRepository.findOne({
+        where: { id },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          refreshToken: true
+        },
+      });
+
+      return user;
+    } catch (error) {
+      throw new BadRequestException(
+        `Error finding user by id ${id}: ${error.message}`,
+        error,
+      );
+    }
+  }
+
+  async updateRefreshToken(userId: string, refreshToken: string) {
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.userRepository.update(userId, {
+      refreshToken: hashedRefreshToken,
+    });
   }
 }

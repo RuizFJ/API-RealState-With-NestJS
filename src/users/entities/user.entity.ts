@@ -40,6 +40,9 @@ export class User {
 
     @Column({ default: true })
     is_active: boolean;
+
+    @Column({ nullable: true, select: false })
+    refreshToken: string;
     
     
     // Additional fields can be added as needed
