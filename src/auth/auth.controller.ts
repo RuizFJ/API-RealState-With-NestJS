@@ -10,6 +10,8 @@ import { AuthService } from './auth.service';
 import { SignUpLocalDto } from './dto/sign-up-local.dto';
 import { GoogleAuthGuard } from './guards/googleAuth.guard';
 import { LoginDto } from './dto/login.dto';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { Auth } from './decorators/auth.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -40,5 +42,14 @@ export class AuthController {
   @Post('refresh-token')
   refresh(@Body('refreshToken') token: string) {
     return this.authService.rotateRefreshToken(token);
+  }
+
+  @Get('private')
+  @Auth(UserRole.ADMIN)
+  testPrivateRute2() {
+    return {
+      ok: true,
+      ms: 'Hola estas autorizado',
+    };
   }
 }
