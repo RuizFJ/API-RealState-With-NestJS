@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, MinLength } from "class-validator";
-import { AuthenticationStatus } from "src/common/enums/provider-authentication.enum";
+import { AuthenticationStatus } from "src/common/enums/authentication-status.enum";
 
 
 export class CreateUserDto {

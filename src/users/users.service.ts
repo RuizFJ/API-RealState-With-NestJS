@@ -43,7 +43,7 @@ export class UsersService {
         name: createdUser.name,
         email: createdUser.email,
         id: createdUser.id,
-        role: createdUser.role,
+        roles: createdUser.roles, 
       };
     } catch (error) {
       if (error.code === '23505') {
@@ -127,7 +127,7 @@ export class UsersService {
           id: true,
           email: true,
           password: true,
-          role: true,
+          roles: true,
           provider: true,
         },
       });
@@ -148,7 +148,7 @@ export class UsersService {
         select: {
           id: true,
           email: true,
-          role: true,
+          roles: true,
           refreshToken: true
         },
       });

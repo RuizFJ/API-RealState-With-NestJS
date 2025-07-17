@@ -1,61 +1,81 @@
-import { AgentRequest } from "src/agent-request/entities/agent-request.entity";
-import { AuthenticationStatus } from "src/common/enums/provider-authentication.enum";
-import { UserRole } from "src/common/enums/user-role.enum";
-import { Property } from "src/properties/entities/property.entity";
-import { agent } from "supertest";
-import { BeforeInsert, Column, Entity, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn } from "typeorm";
+import { AgentRequest } from 'src/agent-request/entities/agent-request.entity';
+import { AuthenticationStatus } from 'src/common/enums/authentication-status.enum';
+import { UserRole } from 'src/common/enums/user-role.enum';
+import { Property } from 'src/properties/entities/property.entity';
+import { agent } from 'supertest';
+import {
+  BeforeInsert,
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class User {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+  @Column()
+  name: string;
 
-    @Column()
-    name: string;
+  @Column({ nullable: true }) // Optional field
+  lastName: string;
 
-    @Column({ nullable: true }) // Optional field
-    lastName: string;
+  @Column({ unique: true })
+  email: string;
 
-    @Column({ unique: true })
-    email: string;
+  @Column({ select: false, nullable: true }) // Exclude from queries by default
+  password: string;
 
-    @Column({ select: false, nullable: true }) // Exclude from queries by default
-    password: string;
+  /*@Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
+    role: UserRole[];*/
 
-    @Column({ type: 'enum', enum: UserRole, default: UserRole.USER })
-    role: UserRole;
+  @Column('text', {
+    array: true,
+    default: [UserRole.USER], // Default role is USER
+  })
+  roles: UserRole[]; // Array of roles, defaulting to USER
 
-    @Column({ nullable: true }) // para usuarios Google
-    googleId: string;
+  @Column({ nullable: true }) // para usuarios Google
+  googleId: string;
 
-    @Column({type:'enum', enum:AuthenticationStatus, default: AuthenticationStatus.LOCAL})
-    provider: AuthenticationStatus; //para distinguir origen
+  @Column({
+    type: 'enum',
+    enum: AuthenticationStatus,
+    default: AuthenticationStatus.LOCAL,
+  })
+  provider: AuthenticationStatus; //para distinguir origen
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-    created_at: Date;
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
-    @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
-    updated_at: Date;
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updated_at: Date;
 
-    @Column({ default: true })
-    is_active: boolean;
+  @Column({ default: true })
+  is_active: boolean;
 
-    @Column({ nullable: true, select: false })
-    refreshToken: string;
-    
-    
-    // Additional fields can be added as needed
+  @Column({ nullable: true, select: false })
+  refreshToken: string;
 
+  // Additional fields can be added as needed
 
-    //No es obligatorio, pero sí es recomendado si planeas navegar la relación desde ambos lados,
-    //es decir, si quieres acceder a las propiedades del agente desde el objeto User.
-    @OneToOne(() => AgentRequest, (agentRequest) => agentRequest.user, { nullable: true })
-    agentRequest: AgentRequest;
+  //No es obligatorio, pero sí es recomendado si planeas navegar la relación desde ambos lados,
+  //es decir, si quieres acceder a las propiedades del agente desde el objeto User.
+  @OneToOne(() => AgentRequest, (agentRequest) => agentRequest.user, {
+    nullable: true,
+  })
+  agentRequest: AgentRequest;
 
-
-    @BeforeInsert()
-    updateEmailToLowerCase() {
-        this.email = this.email.toLowerCase().trim();
-    }
+  @BeforeInsert()
+  updateEmailToLowerCase() {
+    this.email = this.email.toLowerCase().trim();
+  }
 }

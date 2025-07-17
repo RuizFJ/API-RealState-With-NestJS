@@ -91,7 +91,7 @@ export class AgentRequestService {
 
     // Update the user role to 'agent'
     const user = request.user;
-    user.role = UserRole.AGENT;
+    user.roles.push(UserRole.AGENT);
     await this.userRepo.save(user);
     // Save the updated request
 

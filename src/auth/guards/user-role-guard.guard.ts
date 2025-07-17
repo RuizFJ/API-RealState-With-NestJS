@@ -42,20 +42,19 @@ export class UserRoleGuard implements CanActivate {
       return true;
     }
 
-    //Todo modify the user entity to have a roles property that is an array of strings
     // and then check if the user has any of the valid roles
-    /*for (const role of user.role) {
+    for (const role of user.roles) {
       
       if(validRoles.includes(role)){
         return true
       }
-    }*/
+    }
 
-    for (const role of validRoles) {
+    /*for (const role of validRoles) {
       if (role === user.role) {
         return true;
       }
-    }
+    }*/
 
     throw new ForbiddenException('User need a valid role');
   }

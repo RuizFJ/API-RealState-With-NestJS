@@ -8,7 +8,7 @@ import { SignUpLocalDto } from './dto/sign-up-local.dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { AuthenticationStatus } from 'src/common/enums/provider-authentication.enum';
+import { AuthenticationStatus } from 'src/common/enums/authentication-status.enum';
 import { LoginDto } from './dto/login.dto';
 import { IsStrongPassword } from 'class-validator';
 import * as bcrypt from 'bcrypt';
@@ -52,7 +52,7 @@ export class AuthService {
           id: userdata.id,
           name: userdata.name,
           email: userdata.email,
-          role: userdata.role,
+          roles: userdata.roles
         },
         accessToken,
         refreshToken,
@@ -164,7 +164,7 @@ export class AuthService {
         throw new UnauthorizedException('Invalid refresh token');
       }
 
-    const newPayload = { sub: user.id, email: user.email, role: user.role };
+    const newPayload = { sub: user.id, email: user.email, role: user.roles };
 
       const newAccessToken = this.jwtService.sign(newPayload, {
         expiresIn: '15m',
